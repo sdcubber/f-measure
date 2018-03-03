@@ -22,15 +22,15 @@ import classifiers.thresholding as th
 from classifiers.F_score import compute_F_score
 from classifiers.ye_et_al import QuadraticTimeAlgorithm
 from sklearn.preprocessing import OneHotEncoder
-from classifiers.nn import GFM_CNN_classifier, GFM_classifier
+from classifiers.nn import GFM_classifier
 from classifiers.gfm import GeneralFMaximizer, complete_matrix_columns_with_zeros
 
 # Let TF see only one GPU
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 dataset = sys.argv[1]
-pretrained = True
 k = int(sys.argv[2])  # no of labels
+pretrained = True
 
 csv_path_train = '../data/{}/TRAIN.csv'.format(dataset)
 csv_path_validation = '../data/{}/VALIDATION.csv'.format(dataset)
@@ -186,24 +186,3 @@ print('Done!')
 np.save('../matP/{}_top_{}_P_train.npy'.format(dataset, k), pis_train_filled)
 np.save('../matP/{}_top_{}_P_validation.npy'.format(dataset, k), pis_validation_filled)
 np.save('../matP/{}_top_{}_P_test.npy'.format(dataset, k), pis_test_filled)
-
-# Compute optimal predictions for F1
-for beta in [1]:
-    GFM = GeneralFMaximizer(beta, n_labels)
-
-    # Run GFM algo on this output
-    (optimal_predictions_train, E_F_train) = GFM.get_predictions(predictions=pis_train_filled)
-    (optimal_predictions_validation, E_F_validation) = GFM.get_predictions(
-        predictions=pis_validation_filled)
-
-    # Evaluate F score
-    F_GFM_train = compute_F_score(y_true_train_selection,
-                                  optimal_predictions_train, t=0.5, beta=beta)
-    F_GFM_validation = compute_F_score(
-        y_true_validation_selection, optimal_predictions_validation, t=0.5, beta=beta)
-
-    F_GFM_test = 0
-    if dataset != 'KAGGLE_PLANET':
-        (optimal_predictions_test, E_F_test) = GFM.get_predictions(predictions=pis_test_filled)
-        F_GFM_test = compute_F_score(
-            y_true_test_selection, optimal_predictions_test, t=0.5, beta=beta)
