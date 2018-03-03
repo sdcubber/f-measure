@@ -1,0 +1,22 @@
+## See https://stackoverflow.com/questions/8880603/loop-through-an-array-of-strings-in-bash
+
+declare -a datasets=("KAGGLE_PLANET" "PASCAL_VOC_2007" "PASCAL_VOC_2012" "MS_COCO")
+
+for i in "${datasets[@]}"
+do
+    #python BR.py 64 ${i} -pt 2>&1  | tee ../logs/BR_${i}_pt
+    #python GFM_MLC.py 64 ${i} -pt 2>&1  | tee ../logs/GFM_MLC_${i}_pt
+    #python OR_FINAL.py ${i} -pt 2>&1  | tee ../logs/GFM_OR_L2_${i}_pt
+    #python THRESHOLDING.py 1 64 ${i} -pt 2>&1 | tee ../logs/THRESH_${i}_F1_pt
+    #python THRESHOLDING.py 2 64 ${i} -pt 2>&1 | tee ../logs/THRESH_${i}_F2_pt
+    #python YEETAL.py ${i} 2>&1 -pt | tee ../logs/YE_${i}_pt
+    #python YE_vs_GFM.py ${i}
+    #python MC_vs_OR.py ${i}
+    python extract_VGG_features.py ${i}
+done
+
+
+
+
+
+
