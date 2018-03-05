@@ -129,7 +129,7 @@ class GFM_VGG_classifier(VGG_classifier):
         super().__init__(im_size, n_labels, n_neurons, imagenet)
         self.max_s = max_s
         self.build()
-        # Overwite final layer
+        # Overwrite final layer
         self.y = Dense(self.n_labels * (self.max_s + 1))(self.fc_2)
         self.y = Reshape((self.n_labels, self.max_s + 1))(self.y)
         self.model = Model(inputs=self.x, outputs=self.y)

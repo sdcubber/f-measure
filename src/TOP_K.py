@@ -124,8 +124,8 @@ y_gfm_validation_selection = labelmatrix_to_GFM_matrix(y_true_validation_selecti
 y_gfm_test_selection = labelmatrix_to_GFM_matrix(y_true_test_selection, max_s)
 
 n_labels = k
-model = GFM_classifier(n_features, n_labels, max_s).model
-optimizer = Adam()
+model = GFM_classifier(n_features, n_labels, max_s, c=0.2).model
+optimizer = Adam(lr=1e-4)
 batch_size = 32
 epochs = 200  # Early stopping on validation data
 

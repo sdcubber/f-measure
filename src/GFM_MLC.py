@@ -130,8 +130,11 @@ def GFM_MLC(args, logger, timestamp):
                                                output=y_pred[:, i, :], from_logits=True)
         return loss
 
-    model.compile(loss=GFM_loss, optimizer=optimizer)
+    # First, freeze all layers but the final one
+    for layer in model.layers[:-2]:
+        layer.trainable = False
 
+    model.compile(loss=GFM_loss, optimizer=optimizer)
     print(model.summary())
     callbacks = [
         EarlyStopping(monitor='val_loss', min_delta=0,
@@ -153,6 +156,21 @@ def GFM_MLC(args, logger, timestamp):
             '../results/learningcurves/GFM_MLC_{}_{}.p'.format(dataset, timestamp), 'wb'))
 
     # Load best model
+    model.load_weights('../models/GFMMLC_{}_{}_{}.h5'.format(dataset, im_size, int(pretrained)))
+    model.compile(loss=GFM_loss, optimizer=optimizer)
+
+    # Recompile the model, set all layers to trainable, finetune with small lr
+    for layer in model.layers:
+        layer.trainable = True
+
+    optimizer = Adam(lr=1e-5)
+
+    model.compile(loss=GFM_loss, optimizer=optimizer)
+    print(model.summary())
+
+    model.fit_generator(train_gen, steps_per_epoch=train_steps, epochs=epochs, verbose=verbosity,
+                        callbacks=callbacks, validation_data=validation_gen, validation_steps=validation_steps)
+
     model.load_weights('../models/GFMMLC_{}_{}_{}.h5'.format(dataset, im_size, int(pretrained)))
     model.compile(loss=GFM_loss, optimizer=optimizer)
 
