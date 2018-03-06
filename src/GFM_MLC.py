@@ -36,7 +36,7 @@ def GFM_MLC(args, logger, timestamp):
 
     # Parameters
     im_size = args.im_size
-    batch_size = 32
+    batch_size = 16
     dataset = args.dataset
     pretrained = args.pretrained
     epochs = 1000  # early stopping on validation data
@@ -131,7 +131,7 @@ def GFM_MLC(args, logger, timestamp):
         return loss
 
     # First, freeze all layers but the final one
-    for layer in model.layers[:-2]:
+    for layer in model.layers[:-4]:
         layer.trainable = False
 
     model.compile(loss=GFM_loss, optimizer=optimizer)
@@ -157,7 +157,6 @@ def GFM_MLC(args, logger, timestamp):
 
     # Load best model
     model.load_weights('../models/GFMMLC_{}_{}_{}.h5'.format(dataset, im_size, int(pretrained)))
-    model.compile(loss=GFM_loss, optimizer=optimizer)
 
     # Recompile the model, set all layers to trainable, finetune with small lr
     for layer in model.layers:

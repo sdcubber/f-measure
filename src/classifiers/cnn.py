@@ -110,15 +110,12 @@ class VGG_classifier(object):
 
         # VGG_out = Flatten()(VGGmodel.output) # in case of no pooling
         VGG_out = VGGmodel.output
-        VGG_out = Dropout(0.4)(VGG_out)
-        VGG_out = BatchNormalization()(VGG_out)
+        VGG_out = Dropout(0.25)(VGG_out)
 
         # batchnorm + dense layers
         fc_1 = Dense(self.n_neurons, activation='relu')(VGG_out)
-        self.fc_1 = Dropout(0.4)(fc_1)
-        fc_2 = Dense(self.n_neurons, activation='relu')(self.fc_1)
-        self.fc_2 = Dropout(0.4)(fc_2)
-        self.y = Dense(self.n_labels, activation='sigmoid')(self.fc_2)
+        self.fc_1 = Dropout(0.25)(fc_1)
+        self.y = Dense(self.n_labels, activation='sigmoid')(self.fc_1)
         self.model = Model(inputs=self.x, outputs=self.y)
 
 
@@ -130,6 +127,6 @@ class GFM_VGG_classifier(VGG_classifier):
         self.max_s = max_s
         self.build()
         # Overwrite final layer
-        self.y = Dense(self.n_labels * (self.max_s + 1))(self.fc_2)
+        self.y = Dense(self.n_labels * (self.max_s + 1))(self.fc_1)
         self.y = Reshape((self.n_labels, self.max_s + 1))(self.y)
         self.model = Model(inputs=self.x, outputs=self.y)
