@@ -51,6 +51,10 @@ def GFM_MLC(args, logger, timestamp):
     features_train = None
     features_validation = None
     features_test = None
+    if (dataset == 'KAGGLE_PLANET') or (dataset == 'MS_COCO'):
+        dropout_rates = [0.10, 0.5]
+    elif (dataset == 'PASCAL_VOC_2007') or (dataset == 'PASCAL_VOC_2012'):
+        dropout_rates = [0.25, 0.75]
 
     if pretrained:
         features_train = np.load('../data/{}/features/features_train_max.npy'.format(dataset))
@@ -131,14 +135,26 @@ def GFM_MLC(args, logger, timestamp):
         return loss
 
     # First, freeze all layers but the final one
-    for layer in model.layers[:-4]:
+    for layer in model.layers[:-7]:
         layer.trainable = False
 
-    model.compile(loss=GFM_loss, optimizer=optimizer)
     print(model.summary())
+    # Disable dropout for the pretraining
+    model.layers[-3].rate = dropout_rates[0]
+    model.layers[-6].rate = dropout_rates[0]
+
+    model.compile(loss=GFM_loss, optimizer=optimizer)
+    print(model.layers[-1].get_config())
+    print(model.layers[-2].get_config())
+    print(model.layers[-3].get_config())
+    print(model.layers[-4].get_config())
+    print(model.layers[-5].get_config())
+    print(model.layers[-6].get_config())
+    print(model.layers[-7].get_config())
+
     callbacks = [
         EarlyStopping(monitor='val_loss', min_delta=0,
-                      patience=3, verbose=verbosity, mode='auto'),
+                      patience=3, verbose=1, mode='auto'),
         ModelCheckpoint('../models/GFMMLC_{}_{}_{}.h5'.format(dataset, im_size, int(pretrained)),
                         monitor='val_loss', save_best_only=True, verbose=verbosity)
     ]
@@ -162,17 +178,25 @@ def GFM_MLC(args, logger, timestamp):
     for layer in model.layers:
         layer.trainable = True
 
+    # Increase dropout rate
+    model.layers[-3].rate = dropout_rates[1]
+    model.layers[-6].rate = dropout_rates[1]
+
     optimizer = Adam(lr=1e-5)
 
     model.compile(loss=GFM_loss, optimizer=optimizer)
     print(model.summary())
+    callbacks = [
+        EarlyStopping(monitor='val_loss', min_delta=0,
+                      patience=2, verbose=verbosity, mode='auto'),
+        ModelCheckpoint('../models/GFMMLC_{}_{}_{}.h5'.format(dataset, im_size, int(pretrained)),
+                        monitor='val_loss', save_best_only=True, verbose=1)]
 
     model.fit_generator(train_gen, steps_per_epoch=train_steps, epochs=epochs, verbose=verbosity,
                         callbacks=callbacks, validation_data=validation_gen, validation_steps=validation_steps)
 
     model.load_weights('../models/GFMMLC_{}_{}_{}.h5'.format(dataset, im_size, int(pretrained)))
     model.compile(loss=GFM_loss, optimizer=optimizer)
-
     # Data generators for inference
     train_gen_i = gn.DataGenerator_gfm_MC(df=df_train, n_labels=n_labels,
                                           im_size=im_size, batch_size=batch_size, shuffle=False, mode='test', pretrained=False, max_s=max_s).generate()
@@ -215,12 +239,12 @@ def GFM_MLC(args, logger, timestamp):
     # (Extra: do a postprocessing: constrain the rank of the output matrices) before running GFM
     # Store output of network to this end
 
-    np.save('../results/GFM_MLC_output_train_{}_pt{}'.format(dataset,
-                                                             int(pretrained)), np.array(pis_train_filled))
-    np.save('../results/GFM_MLC_output_validation_{}_pt{}'.format(dataset, int(pretrained)),
-            np.array(pis_validation_filled))
-    np.save('../results/GFM_MLC_output_test_{}_pt{}'.format(dataset,
-                                                            int(pretrained)), np.array(pis_test_filled))
+    # np.save('../results/GFM_MLC_output_train_{}_pt{}'.format(dataset,
+    #                                                         int(pretrained)), np.array(pis_train_filled))
+    # np.save('../results/GFM_MLC_output_validation_{}_pt{}'.format(dataset, int(pretrained)),
+    #        np.array(pis_validation_filled))
+    # np.save('../results/GFM_MLC_output_test_{}_pt{}'.format(dataset,
+    #                                                        int(pretrained)), np.array(pis_test_filled))
     # Compute optimal predictions for F1
     for beta in [1, 2]:
         GFM = GeneralFMaximizer(beta, n_labels)

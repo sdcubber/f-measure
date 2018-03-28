@@ -12,7 +12,7 @@ from keras.layers import Conv2D, Conv2DTranspose, Reshape, Multiply, Dot
 from keras.layers import BatchNormalization
 from keras.engine.topology import Layer
 from keras.models import Model
-from keras.applications import VGG16
+from keras.applications import VGG16, ResNet50
 import keras.backend as K
 from keras import metrics
 
@@ -110,10 +110,11 @@ class VGG_classifier(object):
 
         # VGG_out = Flatten()(VGGmodel.output) # in case of no pooling
         VGG_out = VGGmodel.output
+        VGG_out = BatchNormalization()(VGG_out)
         VGG_out = Dropout(0.25)(VGG_out)
 
         # batchnorm + dense layers
-        fc_1 = Dense(self.n_neurons, activation='relu')(VGG_out)
+        fc_1 = BatchNormalization()(Dense(self.n_neurons, activation='relu')(VGG_out))
         self.fc_1 = Dropout(0.25)(fc_1)
         self.y = Dense(self.n_labels, activation='sigmoid')(self.fc_1)
         self.model = Model(inputs=self.x, outputs=self.y)

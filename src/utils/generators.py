@@ -72,15 +72,31 @@ class DataGenerator(object):
             # Fill up container
             for i, ix in enumerate(indexes):
 
-                im = load_img(self.df['full_path'][ix], target_size=(self.im_size, self.im_size))
-                im = img_to_array(im)
+                im = load_img(self.df['full_path'][ix])
+                w, h = im.size
+                resize = max(self.im_size / w, self.im_size / h)
+                # PIL .resize() requires size as (width, height)!
+                newdim = (int(w * resize), int(h * resize))
+                newim = im.resize(newdim)
+                # Crop out center part
+                half_the_width = newim.size[0] / 2
+                half_the_height = newim.size[1] / 2
+                newim_cropped = newim.crop(
+                    (half_the_width - 112,
+                        half_the_height - 112,
+                        half_the_width + 112,
+                        half_the_height + 112
+                     )
+                )
+
+                im = img_to_array(newim_cropped)
                 im = preprocess_input(im)
 
                 if self.augmentation:
-                    #im = random_rotation(im, rg=15)
-                    #im = random_shift(im, 0.05, 0.05)
+                    # im = random_rotation(im, rg=15)
+                    # im = random_shift(im, 0.05, 0.05)
                     im = randomHorizontalFlip(im)
-                    im = randomVerticalFlip(im)
+                    # im = randomVerticalFlip(im)
                     # im = random_zoom(im, (0.1, 0.1))
                     # im = random_shear(im, 0.1)
                     # im = random_channel_shift(im, 0.1)
